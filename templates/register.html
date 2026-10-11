@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 备忘录系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="logo-icon">📝</div>
+            <h1>创建账户</h1>
+            <p class="subtitle">注册后即可开始记录灵感</p>
+            <div class="error-message" id="errorMsg"></div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" placeholder="3-50个字符" required minlength="3" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" placeholder="至少6个字符" required minlength="6" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="再次输入密码" required>
+                </div>
+                <button type="submit" class="btn btn-primary">注 册</button>
+            </form>
+            <p class="auth-footer">
+                已有账户？<a href="/login">立即登录</a>
+            </p>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const toastEl = document.getElementById('toast');
+        function showToast(msg, type = 'success') {
+            toastEl.textContent = msg;
+            toastEl.className = 'toast ' + type;
+            toastEl.style.display = 'block';
+            setTimeout(() => { toastEl.style.display = 'none'; }, 3000);
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.style.display = 'none';
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                errorMsg.textContent = '两次输入的密码不一致';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast('注册成功，即将跳转到登录页');
+                    setTimeout(() => { window.location.href = '/login'; }, 1500);
+                } else {
+                    errorMsg.textContent = data.error || '注册失败';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.textContent = '网络错误，请稍后重试';
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

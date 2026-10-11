@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分享的笔记 - 备忘录</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="share-container">
+        <div id="shareNote" class="share-note">
+            <div style="text-align:center; padding: 60px 0; color: #999;">
+                <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                <div>正在加载...</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const token = window.location.pathname.split('/share/')[1];
+        
+        async function loadShareNote() {
+            try {
+                const res = await fetch('/api/share/' + token);
+                const data = await res.json();
+                
+                if (res.ok) {
+                    const note = data.note;
+                    const tagsHtml = (note.tags || []).map(t => 
+                        `<span class="note-tag" style="background:${t.color || '#667eea'}">${t.name}</span>`
+                    ).join('');
+                    
+                    document.getElementById('shareNote').innerHTML = `
+                        <h1>${escapeHtml(note.title)}</h1>
+                        <div class="share-note-meta">
+                            <span>👤 ${escapeHtml(note.author)}</span>
+                            <span>👁 ${note.view_count} 次浏览</span>
+                            <span>📅 ${formatDate(note.updated_at)}</span>
+                        </div>
+                        <div class="share-note-tags" style="margin-bottom: 20px;">${tagsHtml}</div>
+                        <div class="share-note-content">${note.content || '<p style="color:#999">暂无内容</p>'}</div>
+                    `;
+                } else {
+                    document.getElementById('shareNote').innerHTML = `
+                        <div style="text-align:center; padding: 60px 0; color: #999;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">😕</div>
+                            <div style="font-size: 18px; margin-bottom: 8px;">${data.error || '笔记不存在'}</div>
+                            <div style="font-size: 14px;">该笔记可能已被删除或未公开分享</div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                document.getElementById('shareNote').innerHTML = `
+                    <div style="text-align:center; padding: 60px 0; color: #999;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                        <div>加载失败，请稍后重试</div>
+                    </div>
+                `;
+            }
+        }
+        
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+        
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.getFullYear() + '-' + 
+                String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(d.getDate()).padStart(2, '0');
+        }
+        
+        loadShareNote();
+    </script>
+</body>
+</html>
